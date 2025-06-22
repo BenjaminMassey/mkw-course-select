@@ -37,10 +37,10 @@ async function randomize() {
         return;
     }
     rolling = true;
-    for (let i = 0; i < 10; i++) {
+    for (let i = 1; i <= 10; i++) {
         document.getElementById("course").style.opacity = 1 - (i * 0.1);
         document.getElementById("label").style.opacity = 1 - (i * 0.1);
-        await new Promise(r => setTimeout(r, 10));
+        await new Promise(r => setTimeout(r, 15));
     }
     let num = Math.floor(Math.random() * courses.length);
     let course = courses[num];
@@ -48,10 +48,11 @@ async function randomize() {
     path = path.replace("?", "Question Mark");
     path = path.replace("'", "");
     document.getElementById("course").src = path;
-    document.getElementById("label").innerText = course;for (let i = 0; i < 10; i++) {
-        document.getElementById("course").style.opacity = (i + 1) * 0.1;
-        document.getElementById("label").style.opacity = (i + 1) * 0.1;
-        await new Promise(r => setTimeout(r, 10));
+    document.getElementById("label").innerText = course;
+    for (let i = 1; i <= 10; i++) {
+        document.getElementById("course").style.opacity = i * 0.1;
+        document.getElementById("label").style.opacity = i * 0.1;
+        await new Promise(r => setTimeout(r, 15));
     }
     rolling = false;
 }
