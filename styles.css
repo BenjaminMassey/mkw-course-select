@@ -1,0 +1,39 @@
+body {
+    width: 100vw;
+    height: 100vh;
+    background-image: url(images/background.webp);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+	margin: 0;
+	display: flex;
+	align-items: center;
+    flex-direction: column;
+}
+
+.container {
+    margin: auto;
+	align-items: center;
+	display: flex;
+	align-items: center;
+    flex-direction: column;
+}
+
+.course {
+    width: max(30vw, 40vh);
+    height: max(30w, 40vh);
+    object-fit: contain;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.label {
+    text-align: center;
+    font-size: 3em;
+    color: white;
+    text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;  
+}
