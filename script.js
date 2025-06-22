@@ -49,6 +49,7 @@ async function randomize() {
     path = path.replace("'", "");
     document.getElementById("course").src = path;
     document.getElementById("label").innerText = course;
+    await new Promise(r => setTimeout(r, 100));
     for (let i = 1; i <= 10; i++) {
         document.getElementById("course").style.opacity = i * 0.1;
         document.getElementById("label").style.opacity = i * 0.1;
