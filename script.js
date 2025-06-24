@@ -27,6 +27,7 @@ let courses = [
     "Starview Peak",
     "Toad's Factory",
     "Wario Shipyard",
+    "Wario Stadium",
     "Whistletop Summit"
 ];
 
