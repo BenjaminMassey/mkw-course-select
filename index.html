@@ -2,54 +2,123 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=0.1">
     <title>MKW Select</title>
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
     <link rel="stylesheet" href="styles.css">
     <script type="text/javascript" src="script.js"></script>
 </head>
 <body>
-    <div class="container">
-        <img id="course"
-            class="course"
-            src="images/random.webp"
-            onclick="randomize()" />
-        <div id="label"
-            class="label">
-            Click me!
+    <div id="root" class="container">
+        <div id="exclusive-menu" class="container boxed">
+            <div id="exclusive_label"
+                class="label">
+                Exclusive Mode
+            </div>
+            <div id="gui-items" class="horiz-container">
+                <div class="container">
+                    <img id="exclusive"
+                        class="gui-element"
+                        src="images/cross.webp"
+                        onclick="toggleExclusive()" />
+                    <div class="small-label">Enable</div>
+                </div>
+                <div class="container">
+                    <img id="show_list"
+                        class="gui-element"
+                        src="images/list.webp"
+                        onclick="toggleList()" />
+                    <div class="small-label">List</div>
+                </div>
+                <div class="container">
+                    <img id="auto-remove"
+                        class="gui-element"
+                        src="images/cross.webp"
+                        onclick="toggleRemove()" />
+                    <div class="small-label">Auto-Remove</div>
+                </div>
+            </div>
+        </div>
+        <div id="list-item-area" class="container" style="padding-top: 5vh">
+            <img id="course"
+                class="course"
+                src="images/random.webp"
+                onclick="randomize()" />
+            <div id="label"
+                class="label">
+                Click me!
+            </div>
         </div>
     </div>
-    <div class="cache">
-        <img class="cache" src="images/courses/Acorn Heights.webp"/>
-        <img class="cache" src="images/courses/Airship Fortress.webp"/>
-        <img class="cache" src="images/courses/Boo Cinema.webp"/>
-        <img class="cache" src="images/courses/Bowsers Castle.webp"/>
-        <img class="cache" src="images/courses/Cheep Cheep Falls.webp"/>
-        <img class="cache" src="images/courses/Choco Mountain.webp"/>
-        <img class="cache" src="images/courses/Crown City.webp"/>
-        <img class="cache" src="images/courses/Dandelion Depths.webp"/>
-        <img class="cache" src="images/courses/Desert Hills.webp"/>
-        <img class="cache" src="images/courses/Dino Dino Jungle.webp"/>
-        <img class="cache" src="images/courses/DK Pass.webp"/>
-        <img class="cache" src="images/courses/DK Spaceport.webp"/>
-        <img class="cache" src="images/courses/Dry Bones Burnout.webp"/>
-        <img class="cache" src="images/courses/Faraway Oasis.webp"/>
-        <img class="cache" src="images/courses/Great Question Mark Block Ruins.webp"/>
-        <img class="cache" src="images/courses/Koopa Troopa Beach.webp"/>
-        <img class="cache" src="images/courses/Mario Bros Circuit.webp"/>
-        <img class="cache" src="images/courses/Mario Circuit.webp"/>
-        <img class="cache" src="images/courses/Moo Moo Meadows.webp"/>
-        <img class="cache" src="images/courses/Peach Beach.webp"/>
-        <img class="cache" src="images/courses/Peach Stadium.webp"/>
-        <img class="cache" src="images/courses/Rainbow Road.webp"/>
-        <img class="cache" src="images/courses/Salty Salty Speedway.webp"/>
-        <img class="cache" src="images/courses/Shy Guy Bazaar.webp"/>
-        <img class="cache" src="images/courses/Sky-High Sundae.webp"/>
-        <img class="cache" src="images/courses/Starview Peak.webp"/>
-        <img class="cache" src="images/courses/Toads Factory.webp"/>
-        <img class="cache" src="images/courses/Wario Shipyard.webp"/>
-        <img class="cache" src="images/courses/Wario Stadium.webp"/>
-        <img class="cache" src="images/courses/Whistletop Summit.webp"/>
+    <div id="list-mode" class="list-mode disabled">
+        <div id="list-header" class="horiz-container list-header">
+            <div class="container">
+                <img id="disable_list"
+                    class="gui-element list-header"
+                    src="images/disable.webp"
+                    onclick="disableList()" />
+                <div class="small-label">None</div>
+            </div>
+            <div class="container">
+                <img id="reset_list"
+                    class="gui-element list-header"
+                    src="images/reset.webp"
+                    onclick="resetList()" />
+                <div class="small-label">All</div>
+            </div>
+            <div id="list-label"
+                class="label list-header">
+                Exclusive Mode List
+            </div>
+            <div class="container" style="margin-left: max(4vw, 5vh);">
+                <img class="gui-element list-header"
+                    src="images/close.webp"
+                    onclick="toggleList()" />
+                <div class="small-label">Close</div>
+            </div>
+        </div>
+        <div id="list-columns" class="horiz-container">
+            <div class="list-column">
+                <img id="list-0" class="list-item" src="images/courses/Acorn Heights.webp" onclick="listClick(this.id)"/>
+                <img id="list-1" class="list-item" src="images/courses/Airship Fortress.webp" onclick="listClick(this.id)"/>
+                <img id="list-2" class="list-item" src="images/courses/Boo Cinema.webp" onclick="listClick(this.id)"/>
+                <img id="list-3" class="list-item" src="images/courses/Bowsers Castle.webp" onclick="listClick(this.id)"/>
+                <img id="list-4" class="list-item" src="images/courses/Cheep Cheep Falls.webp" onclick="listClick(this.id)"/>
+                <img id="list-5" class="list-item" src="images/courses/Choco Mountain.webp" onclick="listClick(this.id)"/>
+            </div>
+            <div class="list-column">
+                <img id="list-6" class="list-item" src="images/courses/DK Pass.webp" onclick="listClick(this.id)"/>
+                <img id="list-7" class="list-item" src="images/courses/DK Spaceport.webp" onclick="listClick(this.id)"/>
+                <img id="list-8" class="list-item" src="images/courses/Crown City.webp" onclick="listClick(this.id)"/>
+                <img id="list-9" class="list-item" src="images/courses/Dandelion Depths.webp" onclick="listClick(this.id)"/>
+                <img id="list-10" class="list-item" src="images/courses/Desert Hills.webp" onclick="listClick(this.id)"/>
+                <img id="list-11" class="list-item" src="images/courses/Dino Dino Jungle.webp" onclick="listClick(this.id)"/>
+            </div>
+            <div class="list-column">
+                <img id="list-12" class="list-item" src="images/courses/Dry Bones Burnout.webp" onclick="listClick(this.id)"/>
+                <img id="list-13" class="list-item" src="images/courses/Faraway Oasis.webp" onclick="listClick(this.id)"/>
+                <img id="list-14" class="list-item" src="images/courses/Great Question Mark Block Ruins.webp" onclick="listClick(this.id)"/>
+                <img id="list-15" class="list-item" src="images/courses/Koopa Troopa Beach.webp" onclick="listClick(this.id)"/>
+                <img id="list-16" class="list-item" src="images/courses/Mario Bros Circuit.webp" onclick="listClick(this.id)"/>
+                <img id="list-17" class="list-item" src="images/courses/Mario Circuit.webp" onclick="listClick(this.id)"/>
+            </div>
+            <div class="list-column">
+                <img id="list-18" class="list-item" src="images/courses/Moo Moo Meadows.webp" onclick="listClick(this.id)"/>
+                <img id="list-19" class="list-item" src="images/courses/Peach Beach.webp" onclick="listClick(this.id)"/>
+                <img id="list-20" class="list-item" src="images/courses/Peach Stadium.webp" onclick="listClick(this.id)"/>
+                <img id="list-21" class="list-item" src="images/courses/Rainbow Road.webp" onclick="listClick(this.id)"/>
+                <img id="list-22" class="list-item" src="images/courses/Salty Salty Speedway.webp" onclick="listClick(this.id)"/>
+                <img id="list-23" class="list-item" src="images/courses/Shy Guy Bazaar.webp" onclick="listClick(this.id)"/>
+            </div>
+            <div class="list-column">
+                <img id="list-24" class="list-item" src="images/courses/Sky-High Sundae.webp" onclick="listClick(this.id)"/>
+                <img id="list-25" class="list-item" src="images/courses/Starview Peak.webp" onclick="listClick(this.id)"/>
+                <img id="list-26" class="list-item" src="images/courses/Toads Factory.webp" onclick="listClick(this.id)"/>
+                <img id="list-27" class="list-item" src="images/courses/Wario Shipyard.webp" onclick="listClick(this.id)"/>
+                <img id="list-28" class="list-item" src="images/courses/Wario Stadium.webp" onclick="listClick(this.id)"/>
+                <img id="list-29" class="list-item" src="images/courses/Whistletop Summit.webp" onclick="listClick(this.id)"/>
+            </div>
+        </div>
     </div>
 </body>
 </html>

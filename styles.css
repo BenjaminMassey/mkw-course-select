@@ -20,6 +20,20 @@ body {
     flex-direction: column;
 }
 
+.boxed {
+    background-color: #0011ff55;
+    border: 5px solid #6a00ff;
+    padding: 15px;
+}
+
+.horiz-container {
+    margin: auto;
+    align-items: center;
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+}
+
 .course {
     width: max(30vw, 40vh);
     height: max(30w, 40vh);
@@ -27,10 +41,27 @@ body {
     margin-left: auto;
     margin-right: auto;
 }
+.course:hover {
+    filter: sepia(60%);
+    transition: filter 0.3s ease;
+}
+
+.gui-element {
+    width: max(8vw, 10vh);
+    height: max(8w, 10vh);
+    object-fit: contain;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0px 1vw 0px 1vw;
+}
+.gui-element:hover {
+    filter: sepia(60%);
+    transition: filter 0.3s ease;
+}
 
 .label {
     text-align: center;
-    font-size: 3em;
+    font-size: max(4vh, 3.5vw);
     color: white;
     text-shadow:
     -1px -1px 0 #000,
@@ -39,8 +70,53 @@ body {
     1px 1px 0 #000;  
 }
 
-.cache {
-    width: 0;
-    height: 0;
+.small-label {
+    text-align: center;
+    font-size: max(3vh, 1.5vw);
+    color: white;
+    text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;  
+}
+
+.list-mode {
+    width: 100vw;
+    height: 100vh;
+    background-color: #000000db;
+    position: fixed;
+    top: 0;
+    left: 0;
+    margin: 0;
+	display: flex;
+	align-items: center;
+    flex-direction: column;
+    overflow: hidden;
+}
+.list-mode.disabled {
     opacity: 0;
+    pointer-events: none;
+}
+
+.list-column {
+    width: 20vw;
+    height: 82vh;
+}
+
+.list-item {
+    width: 20vw;
+    height: 13.5vh;
+    object-fit: contain;
+    margin-left: auto;
+    margin-right: auto;
+}
+.list-item.excluded {
+    filter: grayscale(1);
+    opacity: 0.4;
+    transition: filter 0.3s ease;
+}
+
+.list-header {
+    height: 5vh;
 }
