@@ -28,7 +28,7 @@ let courses = [
     "Toad's Factory",
     "Wario Shipyard",
     "Wario Stadium",
-    "Whistletop Summit"
+    "Whistlestop Summit"
 ];
 
 function save() {
