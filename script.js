@@ -176,7 +176,7 @@ async function randomize() {
     
     if (list.length === 0) {
         document.getElementById("course").src = "images/empty.webp";
-        document.getElementById("map").src = "images/empty.webp";
+        document.getElementById("map").src = "images/nothing.webp";
         document.getElementById("label").innerText = "List Empty";
         rolling = false;
         return;
