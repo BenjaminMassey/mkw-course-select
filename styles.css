@@ -127,3 +127,9 @@ body {
 .list-header {
     height: 5vh;
 }
+
+.cache {
+    width: 0;
+    height: 0;
+    opacity: 0;
+}
