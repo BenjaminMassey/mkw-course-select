@@ -10,7 +10,7 @@
 </head>
 <body>
     <div id="root" class="container">
-        <div id="exclusive-menu" class="container boxed">
+        <div id="exclusive-menu" class="container boxed exclusive">
             <div id="exclusive_label"
                 class="label">
                 Exclusive Mode
@@ -48,8 +48,13 @@
                 class="label">
                 Click me!
             </div>
+            <img id="map"
+                class="course"
+                src="images/random.webp"
+                onclick="randomize()" />
         </div>
     </div>
+
     <div id="list-mode" class="list-mode disabled">
         <div id="list-header" class="horiz-container list-header">
             <div class="container">
@@ -70,7 +75,7 @@
                 class="label list-header">
                 Exclusive Mode List
             </div>
-            <div class="container" style="margin-left: max(4vw, 5vh);">
+            <div class="container">
                 <img class="gui-element list-header"
                     src="images/close.webp"
                     onclick="toggleList()" />

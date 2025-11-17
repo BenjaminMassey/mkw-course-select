@@ -176,6 +176,7 @@ async function randomize() {
     
     if (list.length === 0) {
         document.getElementById("course").src = "images/empty.webp";
+        document.getElementById("map").src = "images/empty.webp";
         document.getElementById("label").innerText = "List Empty";
         rolling = false;
         return;
@@ -183,6 +184,7 @@ async function randomize() {
 
     for (let i = 1; i <= 10; i++) {
         document.getElementById("course").style.opacity = 1 - (i * 0.1);
+        document.getElementById("map").style.opacity = 1 - (i * 0.1);
         document.getElementById("label").style.opacity = 1 - (i * 0.1);
         await new Promise(r => setTimeout(r, 15));
     }
@@ -196,15 +198,19 @@ async function randomize() {
         save();
     }
     
-    let path = "images/courses/" + course + ".webp";
-    path = path.replace("?", "Question Mark");
-    path = path.replace("'", "");
-    document.getElementById("course").src = path;
+    let filename = course + ".webp";
+    filename = filename.replace("?", "Question Mark");
+    filename = filename.replace("'", "");
+    let course_path = "images/courses/" + filename;
+    let map_path = "images/maps/" + filename;
+    document.getElementById("course").src = course_path;
+    document.getElementById("map").src = map_path;
     document.getElementById("label").innerText = course;
     
     await new Promise(r => setTimeout(r, 100));
     for (let i = 1; i <= 10; i++) {
         document.getElementById("course").style.opacity = i * 0.1;
+        document.getElementById("map").style.opacity = i * 0.1;
         document.getElementById("label").style.opacity = i * 0.1;
         await new Promise(r => setTimeout(r, 15));
     }
