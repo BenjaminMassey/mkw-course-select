@@ -86,15 +86,16 @@ function load() {
         return {
             "current_list": saved_list ? JSON.parse(saved_list) : [...courses],
             "history": saved_history ? JSON.parse(saved_history) : [],
-            "exclusive": saved_exclusive ? JSON.parse(saved_exclusive) : false,
-            "autoRemove": saved_remove ? JSON.parse(saved_remove) : false
+            "exclusive": saved_exclusive ? JSON.parse(saved_exclusive) : true,
+            "autoRemove": saved_remove ? JSON.parse(saved_remove) : true
         };
     } catch (error) {
         console.error('Failed to load from localStorage:', error);
         return {
             "current_list": [...courses],
-            "exclusive": false,
-            "autoRemove": false
+            "history": [],
+            "exclusive": true,
+            "autoRemove": true
         };
     }
 }
