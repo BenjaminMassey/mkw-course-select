@@ -133,3 +133,17 @@ body {
     height: 0;
     opacity: 0;
 }
+
+.map-container {
+    width: min(100vw, 53.333vh);
+    height: 30vh;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    display: inline;
+}
+
+.map {
+    width: 100%;
+    height: 100%;
+}
