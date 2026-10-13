@@ -48,11 +48,6 @@ body {
     margin-left: auto;
     margin-right: auto;
 }
-.course:hover {
-    filter: sepia(60%);
-    transition: filter 0.3s ease;
-}
-
 .gui-element {
     width: 10vh;
     height: 10vh;
@@ -61,11 +56,6 @@ body {
     margin-right: auto;
     padding: 0px 1vw 0px 1vw;
 }
-.gui-element:hover {
-    filter: sepia(60%);
-    transition: filter 0.3s ease;
-}
-
 .label {
     text-align: center;
     font-size: 3.5vh;
