@@ -60,7 +60,7 @@
     </div>
 
     <div id="list-mode" class="list-mode disabled">
-        <div id="list-header" class="horiz-container list-header">
+        <div id="list-header" class="horiz-container">
             <div class="container">
                 <img id="disable_list"
                     class="gui-element list-header"
@@ -75,10 +75,6 @@
                     onclick="resetList()" />
                 <div class="small-label">All</div>
             </div>
-            <div id="list-label"
-                class="label list-header">
-                Exclusive Mode List
-            </div>
             <div class="container">
                 <img class="gui-element list-header"
                     src="images/close.webp"
@@ -86,14 +82,9 @@
                 <div class="small-label">Close</div>
             </div>
         </div>
-        <!-- Course items are built by script.js from the generated course list. -->
-        <div id="list-columns" class="horiz-container">
-            <div class="list-column"></div>
-            <div class="list-column"></div>
-            <div class="list-column"></div>
-            <div class="list-column"></div>
-            <div class="list-column"></div>
-        </div>
+        <!-- Course items are built by script.js from the generated course list.
+             layout_list() sizes the grid to fill this area at any viewport. -->
+        <div id="list-grid"></div>
     </div>
     <!-- Map cache images are built by script.js from the generated course list. -->
     <div id="cache" class="cache"></div>

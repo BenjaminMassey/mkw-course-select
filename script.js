@@ -131,20 +131,72 @@ let autoRemove = data["autoRemove"];
 
 // Build the course list UI and the map cache from the course list.
 function build_list() {
-    const columns = document.querySelectorAll("#list-columns .list-column");
-    if (courses.length === 0 || columns.length === 0) {
+    const grid = document.getElementById("list-grid");
+    if (courses.length === 0 || !grid) {
         return;
     }
-    const per_column = Math.ceil(courses.length / columns.length);
     courses.forEach((course, i) => {
         const img = document.createElement("img");
         img.id = "list-" + i;
         img.className = "list-item";
         img.src = image_path(course, "courses");
         img.onclick = () => listClick(img.id);
-        columns[Math.floor(i / per_column)].appendChild(img);
+        grid.appendChild(img);
     });
 }
+
+// Course thumbnails are 16:9. Pick the number of grid columns that makes
+// them as large as possible while fitting every course into the list area,
+// then let the grid rows fill the remaining space. Runs on load and resize
+// so the grid fills the page at any viewport size.
+const COURSE_ASPECT = 16 / 9;
+function layout_list() {
+    const grid = document.getElementById("list-grid");
+    if (!grid || courses.length === 0) {
+        return;
+    }
+    const rect = grid.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+        return;
+    }
+    const gap = rect.height * 0.005; // matches the 0.5vh CSS gap
+    let best_cols = 1;
+    let best_area = -1;
+    for (let cols = 1; cols <= courses.length; cols++) {
+        const rows = Math.ceil(courses.length / cols);
+        const cell_w = (rect.width - (cols - 1) * gap) / cols;
+        const cell_h = (rect.height - (rows - 1) * gap) / rows;
+        // Largest 16:9 thumbnail that fits in one cell
+        const img_w = Math.min(cell_w, cell_h * COURSE_ASPECT);
+        const area = courses.length * img_w * (img_w / COURSE_ASPECT);
+        if (area > best_area) {
+            best_area = area;
+            best_cols = cols;
+        }
+    }
+    const rows = Math.ceil(courses.length / best_cols);
+    // minmax(0, 1fr): without the 0 minimum, tracks refuse to shrink below
+    // the images' min-content size and the last rows overflow the area.
+    // (grid-template-rows rather than grid-auto-rows: the latter is not
+    // settable via CSSOM in Chrome.)
+    grid.style.gridTemplateColumns = `repeat(${best_cols}, minmax(0, 1fr))`;
+    grid.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+
+    // Center the (possibly partial) last row by padding it with empty cells.
+    const lastRowStart = (rows - 1) * best_cols;
+    const padLeft = Math.floor((best_cols - (courses.length - lastRowStart)) / 2);
+    for (const pad of grid.querySelectorAll(".list-pad")) {
+        pad.remove();
+    }
+    const anchor = grid.children[lastRowStart];
+    for (let i = 0; i < padLeft; i++) {
+        const pad = document.createElement("div");
+        pad.className = "list-pad";
+        grid.insertBefore(pad, anchor);
+    }
+}
+
+window.addEventListener("resize", layout_list);
 
 function build_cache() {
     const cache = document.getElementById("cache");
@@ -162,6 +214,7 @@ function build_cache() {
 document.addEventListener("DOMContentLoaded", function() {
     build_list();
     build_cache();
+    layout_list();
 });
 
 window.onload = function() {
