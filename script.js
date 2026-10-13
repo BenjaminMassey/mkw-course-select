@@ -1,35 +1,13 @@
-let courses = [
-    "Acorn Heights",
-    "Airship Fortress",
-    "Boo Cinema",
-    "Bowser's Castle",
-    "Cheep Cheep Falls",
-    "Choco Mountain",
-    "Crown City",
-    "Dandelion Depths",
-    "Desert Hills",
-    "Dino Dino Jungle",
-    "DK Pass",
-    "DK Spaceport",
-    "Dry Bones Burnout",
-    "Faraway Oasis",
-    "Great ? Block Ruins",
-    "Koopa Troopa Beach",
-    "Mario Bros Circuit",
-    "Mario Circuit",
-    "Moo Moo Meadows",
-    "Peach Beach",
-    "Peach Stadium",
-    "Rainbow Road",
-    "Salty Salty Speedway",
-    "Shy Guy Bazaar",
-    "Sky-High Sundae",
-    "Starview Peak",
-    "Toad's Factory",
-    "Wario Shipyard",
-    "Wario Stadium",
-    "Whistlestop Summit"
-];
+// The course list is generated from images/courses/ by generate-courses.mjs
+// (see courses.js). That list is the single source of truth for which
+// courses exist. Course names are the image filenames without extension;
+// characters that are invalid in filenames (like "?") are percent-encoded
+// in the filename and decoded for display.
+const courses = window.COURSES || [];
+
+if (courses.length === 0) {
+    console.error("courses.js is missing or empty. Run `node generate-courses.mjs` and reload.");
+}
 
 const course_locations = new Map([
     ["Acorn Heights", { x: "46%", y: "5%" }],
@@ -46,7 +24,7 @@ const course_locations = new Map([
     ["DK Spaceport", { x: "40%", y: "85%" }],
     ["Dry Bones Burnout", { x: "39%", y: "14%" }],
     ["Faraway Oasis", { x: "56%", y: "67%" }],
-    ["Great ? Block Ruins", { x: "66%", y: "82%" }],
+    ["Great %3F Block Ruins", { x: "66%", y: "82%" }],
     ["Koopa Troopa Beach", { x: "46%", y: "80%" }],
     ["Mario Bros Circuit", { x: "28%", y: "60%" }],
     ["Mario Circuit", { x: "48%", y: "22%" }],
@@ -64,6 +42,32 @@ const course_locations = new Map([
     ["Whistlestop Summit", { x: "30%", y: "80%" }]
 ]);
 
+// Course names may contain characters that need encoding in URLs (spaces,
+// "%", ...). Encode them so the names still resolve to the image files.
+function image_path(course, dir) {
+    return "images/" + dir + "/" + encodeURIComponent(course) + ".webp";
+}
+
+// Course names are stored percent-encoded where needed (e.g. "%3F" for
+// "?"), so decode them for display.
+function display_name(course) {
+    try {
+        return decodeURIComponent(course);
+    } catch {
+        return course;
+    }
+}
+
+// Normalize a course name for matching: ignore apostrophes and treat "?",
+// "%3F", and "Question Mark" as the same character. Used to migrate saved
+// state that stored older course names.
+function key_name(name) {
+    let n = name.replace(/'/g, "");
+    n = n.replace(/%3F/gi, "?");
+    n = n.replace(/\?/g, "Question Mark");
+    return n;
+}
+
 function save() {
     try {
         localStorage.setItem('current_list', JSON.stringify(current_list));
@@ -76,6 +80,24 @@ function save() {
     }
 }
 
+// Saved state may reference courses by an older name (e.g. without
+// apostrophes) or by a course that no longer exists in images/courses/.
+// Match entries to courses by sanitized name and drop anything unknown.
+function normalize_courses(saved) {
+    const by_key = new Map();
+    for (const course of courses) {
+        by_key.set(key_name(course), course);
+    }
+    const out = [];
+    for (const entry of saved) {
+        const course = by_key.get(key_name(entry));
+        if (course && !out.includes(course)) {
+            out.push(course);
+        }
+    }
+    return out;
+}
+
 function load() {
     try {
         const saved_list = localStorage.getItem('current_list');
@@ -84,8 +106,8 @@ function load() {
         const saved_remove = localStorage.getItem('autoRemove');
         console.log("Loaded from localStorage.");
         return {
-            "current_list": saved_list ? JSON.parse(saved_list) : [...courses],
-            "history": saved_history ? JSON.parse(saved_history) : [],
+            "current_list": saved_list ? normalize_courses(JSON.parse(saved_list)) : [...courses],
+            "history": saved_history ? normalize_courses(JSON.parse(saved_history)) : [],
             "exclusive": saved_exclusive ? JSON.parse(saved_exclusive) : true,
             "autoRemove": saved_remove ? JSON.parse(saved_remove) : true
         };
@@ -107,12 +129,46 @@ let history = data["history"];
 let exclusive = data["exclusive"];
 let autoRemove = data["autoRemove"];
 
+// Build the course list UI and the map cache from the course list.
+function build_list() {
+    const columns = document.querySelectorAll("#list-columns .list-column");
+    if (courses.length === 0 || columns.length === 0) {
+        return;
+    }
+    const per_column = Math.ceil(courses.length / columns.length);
+    courses.forEach((course, i) => {
+        const img = document.createElement("img");
+        img.id = "list-" + i;
+        img.className = "list-item";
+        img.src = image_path(course, "courses");
+        img.onclick = () => listClick(img.id);
+        columns[Math.floor(i / per_column)].appendChild(img);
+    });
+}
+
+function build_cache() {
+    const cache = document.getElementById("cache");
+    if (!cache) {
+        return;
+    }
+    for (const course of courses) {
+        const img = document.createElement("img");
+        img.className = "cache";
+        img.src = image_path(course, "maps");
+        cache.appendChild(img);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    build_list();
+    build_cache();
+});
+
 window.onload = function() {
     displayExclusive();
     displayRemove();
     if (history.length > 0) {
-        let filename = get_filename(history[history.length - 1]);
-        set_map_html("images/maps/" + filename);
+        set_map_html(image_path(history[history.length - 1], "maps"));
     }
 };
 
@@ -196,15 +252,15 @@ function showList() {
 function listClick(id) {
     let index = id.split("-")[1];
     let course = courses[index];
-    console.log("Clicked list item " + course + " (" + index + ")");
+    console.log("Clicked list item " + display_name(course) + " (" + index + ")");
     if (current_list.includes(course)) {
         current_list.splice(current_list.indexOf(course), 1);
         save();
-        console.log('Removing course:', course);
+        console.log('Removing course:', display_name(course));
     } else {
         current_list.push(course);
         save();
-        console.log("Added course:", course);
+        console.log("Added course:", display_name(course));
     }
     document.getElementById("list-" + index).classList.toggle('excluded');
 }
@@ -219,7 +275,6 @@ async function randomize() {
     
     if (list.length === 0) {
         document.getElementById("course").src = "images/empty.webp";
-        //document.getElementById("map").src = "images/nothing.webp";
         document.getElementById("label").innerText = "List Empty";
         rolling = false;
         return;
@@ -236,18 +291,15 @@ async function randomize() {
     let course = list[num];
     
     if (exclusive && autoRemove) {
-        console.log('Removing course:', course);
+        console.log('Removing course:', display_name(course));
         current_list.splice(num, 1);
         save();
     }
     
-    let filename =get_filename(course);
-    let course_path = "images/courses/" + filename;
-    let map_path = "images/maps/" + filename;
-    document.getElementById("course").src = course_path;
-    document.getElementById("label").innerText = course;
+    document.getElementById("course").src = image_path(course, "courses");
+    document.getElementById("label").innerText = display_name(course);
 
-    set_map_html(map_path);
+    set_map_html(image_path(course, "maps"));
     if (exclusive && autoRemove) {
         history.push(course);
         save();
@@ -263,19 +315,16 @@ async function randomize() {
     rolling = false;
 }
 
-function get_filename(course) {
-    let filename = course + ".webp";
-    filename = filename.replace("?", "Question Mark");
-    filename = filename.replace("'", "");
-    return filename;
-}
-
 function set_map_html(map_path) {
     document.getElementById("map").src = map_path;
     let html = document.getElementById("map").outerHTML;
     for (let i = 0; i < history.length; i++) {
         let course = history[i];
         let position = course_locations.get(course);
+        if (!position) {
+            console.warn("No map position for course: " + display_name(course));
+            continue;
+        }
         html += ' <img style="position: absolute; ';
         html += 'width: 3vh; height: 3vh; ';
         html += 'left: ' + position.x + '; ';
