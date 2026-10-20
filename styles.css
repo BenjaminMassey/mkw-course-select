@@ -147,3 +147,10 @@ body {
     height: 100%;
     object-fit: contain;
 }
+
+.retro-menu {
+    padding-right: 2vw;
+}
+.list-item.hidden {
+    display: none;
+}

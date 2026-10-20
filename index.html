@@ -12,32 +12,41 @@
 </head>
 <body>
     <div id="root" class="container">
-        <div id="exclusive-menu" class="container boxed exclusive">
-            <div id="exclusive_label"
-                class="label">
-                Exclusive Mode
+        <div id="top-menu" class="horiz-container">
+            <div id="retro-menu" class="container retro-menu">
+                <img id="retro"
+                    class="gui-element"
+                    src="images/check.webp"
+                    onclick="toggleRetro()" />
+                <div class="small-label">Retro Tracks</div>
             </div>
-            <div id="gui-items" class="horiz-container">
-                <div class="container">
-                    <img id="exclusive"
-                        class="gui-element"
-                        src="images/cross.webp"
-                        onclick="toggleExclusive()" />
-                    <div class="small-label">Enable</div>
+            <div id="exclusive-menu" class="container boxed exclusive">
+                <div id="exclusive_label"
+                    class="label">
+                    Exclusive Mode
                 </div>
-                <div class="container">
-                    <img id="show_list"
-                        class="gui-element"
-                        src="images/list.webp"
-                        onclick="toggleList()" />
-                    <div class="small-label">List</div>
-                </div>
-                <div class="container">
-                    <img id="auto-remove"
-                        class="gui-element"
-                        src="images/cross.webp"
-                        onclick="toggleRemove()" />
-                    <div class="small-label">Auto-Remove</div>
+                <div id="gui-items" class="horiz-container">
+                    <div class="container">
+                        <img id="exclusive"
+                            class="gui-element"
+                            src="images/cross.webp"
+                            onclick="toggleExclusive()" />
+                        <div class="small-label">Enable</div>
+                    </div>
+                    <div class="container">
+                        <img id="show_list"
+                            class="gui-element"
+                            src="images/list.webp"
+                            onclick="toggleList()" />
+                        <div class="small-label">List</div>
+                    </div>
+                    <div class="container">
+                        <img id="auto-remove"
+                            class="gui-element"
+                            src="images/cross.webp"
+                            onclick="toggleRemove()" />
+                        <div class="small-label">Auto-Remove</div>
+                    </div>
                 </div>
             </div>
         </div>

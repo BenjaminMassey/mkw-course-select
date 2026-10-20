@@ -52,6 +52,21 @@ const course_locations = new Map([
     ["Whistlestop Summit", { x: "30%", y: "80%" }]
 ]);
 
+// The retro courses added in a later update. The "Retro Tracks" toggle
+// leaves these out of the random pool when it is off.
+const retro_courses = new Set([
+    "Choco Island 1",
+    "Choco Island 2",
+    "Ghost Valley 1",
+    "Ghost Valley 2",
+    "Ghost Valley 3",
+    "Koopa Beach 1",
+    "Mario Circuit 1",
+    "Mario Circuit 2",
+    "Mario Circuit 3",
+    "Vanilla Lake 1"
+]);
+
 // Course names may contain characters that need encoding in URLs (spaces,
 // "%", ...). Encode them so the names still resolve to the image files.
 function image_path(course, dir) {
@@ -84,6 +99,7 @@ function save() {
         localStorage.setItem('history', JSON.stringify(history));
         localStorage.setItem('exclusive', JSON.stringify(exclusive));
         localStorage.setItem('autoRemove', JSON.stringify(autoRemove));
+        localStorage.setItem('retro', JSON.stringify(retro));
         console.log('Saved to localStorage');
     } catch (error) {
         console.error('Failed to save to localStorage:', error);
@@ -114,12 +130,14 @@ function load() {
         const saved_history = localStorage.getItem('history');
         const saved_exclusive = localStorage.getItem('exclusive');
         const saved_remove = localStorage.getItem('autoRemove');
+        const saved_retro = localStorage.getItem('retro');
         console.log("Loaded from localStorage.");
         return {
             "current_list": saved_list ? normalize_courses(JSON.parse(saved_list)) : [...courses],
             "history": saved_history ? normalize_courses(JSON.parse(saved_history)) : [],
             "exclusive": saved_exclusive ? JSON.parse(saved_exclusive) : true,
-            "autoRemove": saved_remove ? JSON.parse(saved_remove) : true
+            "autoRemove": saved_remove ? JSON.parse(saved_remove) : true,
+            "retro": saved_retro ? JSON.parse(saved_retro) : true
         };
     } catch (error) {
         console.error('Failed to load from localStorage:', error);
@@ -127,7 +145,8 @@ function load() {
             "current_list": [...courses],
             "history": [],
             "exclusive": true,
-            "autoRemove": true
+            "autoRemove": true,
+            "retro": true
         };
     }
 }
@@ -138,6 +157,7 @@ let current_list = data["current_list"];
 let history = data["history"];
 let exclusive = data["exclusive"];
 let autoRemove = data["autoRemove"];
+let retro = data["retro"];
 
 // Build the course list UI and the map cache from the course list.
 function build_list() {
@@ -153,6 +173,17 @@ function build_list() {
         img.onclick = () => listClick(img.id);
         grid.appendChild(img);
     });
+    displayListRetro();
+}
+
+// Hide the retro courses in the list view while retro tracks are off.
+function displayListRetro() {
+    courses.forEach((course, i) => {
+        const item = document.getElementById("list-" + i);
+        if (item) {
+            item.classList.toggle('hidden', !retro && retro_courses.has(course));
+        }
+    });
 }
 
 // Course thumbnails are 16:9. Pick the number of grid columns that makes
@@ -162,7 +193,16 @@ function build_list() {
 const COURSE_ASPECT = 16 / 9;
 function layout_list() {
     const grid = document.getElementById("list-grid");
-    if (!grid || courses.length === 0) {
+    if (!grid) {
+        return;
+    }
+    // Only lay out the courses currently shown (retro ones may be hidden).
+    for (const pad of grid.querySelectorAll(".list-pad")) {
+        pad.remove();
+    }
+    const items = grid.querySelectorAll(".list-item:not(.hidden)");
+    const count = items.length;
+    if (count === 0) {
         return;
     }
     const rect = grid.getBoundingClientRect();
@@ -172,19 +212,19 @@ function layout_list() {
     const gap = rect.height * 0.005; // matches the 0.5vh CSS gap
     let best_cols = 1;
     let best_area = -1;
-    for (let cols = 1; cols <= courses.length; cols++) {
-        const rows = Math.ceil(courses.length / cols);
+    for (let cols = 1; cols <= count; cols++) {
+        const rows = Math.ceil(count / cols);
         const cell_w = (rect.width - (cols - 1) * gap) / cols;
         const cell_h = (rect.height - (rows - 1) * gap) / rows;
         // Largest 16:9 thumbnail that fits in one cell
         const img_w = Math.min(cell_w, cell_h * COURSE_ASPECT);
-        const area = courses.length * img_w * (img_w / COURSE_ASPECT);
+        const area = count * img_w * (img_w / COURSE_ASPECT);
         if (area > best_area) {
             best_area = area;
             best_cols = cols;
         }
     }
-    const rows = Math.ceil(courses.length / best_cols);
+    const rows = Math.ceil(count / best_cols);
     // minmax(0, 1fr): without the 0 minimum, tracks refuse to shrink below
     // the images' min-content size and the last rows overflow the area.
     // (grid-template-rows rather than grid-auto-rows: the latter is not
@@ -194,11 +234,8 @@ function layout_list() {
 
     // Center the (possibly partial) last row by padding it with empty cells.
     const lastRowStart = (rows - 1) * best_cols;
-    const padLeft = Math.floor((best_cols - (courses.length - lastRowStart)) / 2);
-    for (const pad of grid.querySelectorAll(".list-pad")) {
-        pad.remove();
-    }
-    const anchor = grid.children[lastRowStart];
+    const padLeft = Math.floor((best_cols - (count - lastRowStart)) / 2);
+    const anchor = items[lastRowStart];
     for (let i = 0; i < padLeft; i++) {
         const pad = document.createElement("div");
         pad.className = "list-pad";
@@ -230,6 +267,7 @@ document.addEventListener("DOMContentLoaded", function() {
 window.onload = function() {
     displayExclusive();
     displayRemove();
+    displayRetro();
     if (history.length > 0) {
         set_map_html(image_path(history[history.length - 1], "maps"));
     }
@@ -298,6 +336,18 @@ function displayRemove() {
     document.getElementById("auto-remove").src = "images/" + (autoRemove ? "check.webp" : "cross.webp");
 }
 
+function toggleRetro() {
+    retro = !retro;
+    displayRetro();
+    displayListRetro();
+    layout_list();
+    console.log('Retro tracks:', retro);
+    save();
+}
+function displayRetro() {
+    document.getElementById("retro").src = "images/" + (retro ? "check.webp" : "cross.webp");
+}
+
 function toggleList() {
    document.getElementById('list-mode').classList.toggle('disabled');
    showList();
@@ -335,6 +385,9 @@ async function randomize() {
     rolling = true;
     
     let list = exclusive ? current_list : courses;
+    if (!retro) {
+        list = list.filter(course => !retro_courses.has(course));
+    }
     
     if (list.length === 0) {
         document.getElementById("course").src = "images/empty.webp";
@@ -355,7 +408,7 @@ async function randomize() {
     
     if (exclusive && autoRemove) {
         console.log('Removing course:', display_name(course));
-        current_list.splice(num, 1);
+        current_list.splice(current_list.indexOf(course), 1);
         save();
     }
     
