@@ -161,7 +161,9 @@ body {
     position: relative;
     width: 100vw;
     height: 30vh;
-    overflow: hidden;
+    /* Clip the reel at the sides, but leave room above and below for the
+       gold glow and rays. */
+    clip-path: inset(-10vh 0);
 }
 .reel {
     position: absolute;
@@ -182,4 +184,131 @@ body {
     width: min(100vw, 53.333vh);
     height: 100%;
     object-fit: contain;
+}
+
+/* Gold roll. The course image (and the reel item it lands on) gets a gold
+   tint, a pulsing glow that follows the image's shape (drop-shadow ignores
+   the transparent letterboxing) and a gentle swell. The frame shows
+   rotating rays behind it, and once landed a shine sweeps across it. */
+.gold {
+    animation:
+        gold-glow 1s ease-in-out infinite,
+        gold-swell 1s ease-in-out infinite;
+}
+/* The reel item flashes bright as it lights up, then pulses. */
+.reel-item.gold {
+    animation:
+        gold-flash 0.4s ease-out,
+        gold-glow 1s ease-in-out 0.4s infinite,
+        gold-swell 1s ease-in-out 0.4s infinite;
+}
+@keyframes gold-glow {
+    0%, 100% {
+        filter: sepia(0.6) saturate(2.2) brightness(1.05)
+            drop-shadow(0 0 1vh #ffd700) drop-shadow(0 0 3vh #ffb300);
+    }
+    50% {
+        filter: sepia(0.6) saturate(2.2) brightness(1.3)
+            drop-shadow(0 0 2vh #fff6b0) drop-shadow(0 0 6vh #ffd700);
+    }
+}
+/* Uses the scale property rather than transform so it combines with the
+   mirror flip below. */
+@keyframes gold-swell {
+    0%, 100% { scale: 1; }
+    50% { scale: 1.04; }
+}
+/* A gold roll is a Mirror course: flip the image (and the shine masked to
+   it) horizontally. */
+.course.gold,
+.reel-item.gold,
+.course-frame.gold-landed .shine {
+    transform: scaleX(-1);
+}
+@keyframes gold-flash {
+    0% {
+        filter: brightness(3) drop-shadow(0 0 3vh #fff) drop-shadow(0 0 8vh #ffd700);
+    }
+    100% {
+        filter: sepia(0.6) saturate(2.2) brightness(1.05)
+            drop-shadow(0 0 1vh #ffd700) drop-shadow(0 0 3vh #ffb300);
+    }
+}
+
+.sunburst {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 120vh;
+    height: 120vh;
+    margin: -60vh 0 0 -60vh;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease-out;
+    background: repeating-conic-gradient(#ffd700aa 0deg 8deg, transparent 8deg 20deg);
+    -webkit-mask-image: radial-gradient(circle closest-side, black 15%, transparent 40%);
+    mask-image: radial-gradient(circle closest-side, black 15%, transparent 40%);
+    animation: sunburst-spin 12s linear infinite;
+}
+.course-frame.gold-frame .sunburst {
+    opacity: 1;
+}
+@keyframes sunburst-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Sized like the course image and masked to it in randomize(). */
+.shine {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    width: min(100vw, 53.333vh);
+    pointer-events: none;
+    display: none;
+    background: linear-gradient(110deg, transparent 40%, #ffffffcc 50%, transparent 60%);
+    background-size: 250% 100%;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+.course-frame.gold-landed .shine {
+    display: block;
+    animation:
+        shine-sweep 2s ease-in-out infinite,
+        gold-swell 1s ease-in-out infinite;
+}
+@keyframes shine-sweep {
+    0% { background-position: 100% 0; }
+    60%, 100% { background-position: 0% 0; }
+}
+
+.label.gold {
+    color: #ffd700;
+    animation: gold-text 1s ease-in-out infinite;
+}
+@keyframes gold-text {
+    0%, 100% {
+        text-shadow:
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 0 #000,
+        0 0 1vh #ffb300;
+    }
+    50% {
+        text-shadow:
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 0 #000,
+        0 0 2vh #fff6b0,
+        0 0 4vh #ffd700;
+    }
 }

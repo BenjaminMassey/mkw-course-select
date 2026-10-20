@@ -376,7 +376,16 @@ function listClick(id) {
 // settles on the chosen course.
 const REEL_LENGTH = 24;     // courses scrolled past before the chosen one
 const REEL_DURATION = 2300; // ms
-async function spin_reel(pool, chosen) {
+
+// Rare "gold" roll, for a Mirror course: the chosen course lights up gold
+// and flips horizontally just before the reel stops, and stays that way
+// (with a gold "(Mirror)" label) until the next roll. Purely cosmetic.
+// Add ?gold to the URL to force one for testing.
+const GOLD_CHANCE = 0.0026;
+const GOLD_REVEAL = 1200; // ms before the reel stops
+const force_gold = new URLSearchParams(location.search).has("gold");
+
+async function spin_reel(pool, chosen, gold) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         return;
     }
@@ -389,6 +398,7 @@ async function spin_reel(pool, chosen) {
         img.className = "reel-item";
         img.src = src;
         strip.appendChild(img);
+        return img;
     };
 
     // Start from whatever is showing now, then random fillers (no course
@@ -404,7 +414,7 @@ async function spin_reel(pool, chosen) {
         add(image_path(c, "courses"));
         prev = c;
     }
-    add(image_path(chosen, "courses"));
+    const chosen_img = add(image_path(chosen, "courses"));
     add(image_path(random_course(), "courses"));
     add(image_path(random_course(), "courses"));
 
@@ -418,6 +428,12 @@ async function spin_reel(pool, chosen) {
     strip.getBoundingClientRect(); // apply the start position before animating
     strip.style.transition = `transform ${REEL_DURATION}ms cubic-bezier(0.45, 0.05, 0.15, 1)`;
     strip.style.transform = `translateX(${offset - (REEL_LENGTH + 1) * item_w}px)`;
+    if (gold) {
+        setTimeout(() => {
+            chosen_img.classList.add("gold");
+            document.getElementById("course-frame").classList.add("gold-frame");
+        }, REEL_DURATION - GOLD_REVEAL);
+    }
     await new Promise(r => setTimeout(r, REEL_DURATION));
 
     course_img.src = image_path(chosen, "courses");
@@ -446,6 +462,10 @@ async function randomize() {
     // Copy: list may be current_list itself, which auto-remove changes.
     const pool = [...list];
     const course = pool[Math.floor(Math.random() * pool.length)];
+    const gold = force_gold || Math.random() < GOLD_CHANCE;
+    if (gold) {
+        console.log('Gold roll!');
+    }
     
     if (exclusive && autoRemove) {
         console.log('Removing course:', display_name(course));
@@ -459,10 +479,24 @@ async function randomize() {
         await new Promise(r => setTimeout(r, 15));
     }
 
-    await spin_reel(pool, course);
+    document.getElementById("course").classList.remove("gold");
+    document.getElementById("label").classList.remove("gold");
+    document.getElementById("course-frame").classList.remove("gold-frame", "gold-landed");
+    await spin_reel(pool, course, gold);
     
     document.getElementById("course").src = image_path(course, "courses");
-    document.getElementById("label").innerText = display_name(course);
+    document.getElementById("course").classList.toggle("gold", gold);
+    document.getElementById("label").classList.toggle("gold", gold);
+    if (gold) {
+        const mask = `url("${image_path(course, "courses")}")`;
+        const shine = document.getElementById("shine");
+        shine.style.maskImage = mask;
+        shine.style.webkitMaskImage = mask;
+        document.getElementById("course-frame").classList.add("gold-frame", "gold-landed");
+    }
+    document.getElementById("label").innerText = gold
+        ? "★ " + display_name(course) + " (Mirror) ★"
+        : display_name(course);
 
     set_map_html(image_path(course, "maps"));
     if (exclusive && autoRemove) {
