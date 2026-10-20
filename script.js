@@ -1,9 +1,15 @@
-// The course list is generated from images/courses/ by generate-courses.mjs
-// (see courses.js). That list is the single source of truth for which
+// The course lists are generated from images/courses/ (base courses) and
+// images/courses/retro/ (retro courses) by generate-courses.mjs (see
+// courses.js). Those folders are the single source of truth for which
 // courses exist. Course names are the image filenames without extension;
 // characters that are invalid in filenames (like "?") are percent-encoded
 // in the filename and decoded for display.
-const courses = window.COURSES || [];
+//
+// Retro courses come last so they sit together at the end of the list
+// view. The "Retro Tracks" toggle leaves them out of the random pool and
+// hides them in the list view when it is off.
+const retro_courses = new Set(window.RETRO_COURSES || []);
+const courses = [...(window.COURSES || []), ...retro_courses];
 
 if (courses.length === 0) {
     console.error("courses.js is missing or empty. Run `node generate-courses.mjs` and reload.");
@@ -52,25 +58,12 @@ const course_locations = new Map([
     ["Whistlestop Summit", { x: "30%", y: "80%" }]
 ]);
 
-// The retro courses added in a later update. The "Retro Tracks" toggle
-// leaves these out of the random pool when it is off.
-const retro_courses = new Set([
-    "Choco Island 1",
-    "Choco Island 2",
-    "Ghost Valley 1",
-    "Ghost Valley 2",
-    "Ghost Valley 3",
-    "Koopa Beach 1",
-    "Mario Circuit 1",
-    "Mario Circuit 2",
-    "Mario Circuit 3",
-    "Vanilla Lake 1"
-]);
-
 // Course names may contain characters that need encoding in URLs (spaces,
 // "%", ...). Encode them so the names still resolve to the image files.
+// Retro course images live in a retro/ subfolder.
 function image_path(course, dir) {
-    return "images/" + dir + "/" + encodeURIComponent(course) + ".webp";
+    const sub = retro_courses.has(course) ? "retro/" : "";
+    return "images/" + dir + "/" + sub + encodeURIComponent(course) + ".webp";
 }
 
 // Course names are stored percent-encoded where needed (e.g. "%3F" for

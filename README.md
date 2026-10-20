@@ -5,22 +5,32 @@
 A webpage for giving random courses in Mario Kart World.
 
 Features:
-  - Full randomization of 30 course list
+  - Full randomization of the course list
   - Exclusive mode for avoiding repeats
+  - Retro Tracks toggle for including or leaving out the retro courses
   - Browser-based auto save/load of course list state
 
 ## Course list
 
 The files in `images/courses/` are the single source of truth for which
-courses exist. `courses.js` is generated from that directory:
+courses exist. Base courses live directly in `images/courses/`; retro
+courses live in `images/courses/retro/`. `courses.js` is generated from
+those directories:
 
     node generate-courses.mjs
 
 To add or remove a course, add or remove its `.webp` in `images/courses/`
-(and a matching map in `images/maps/`), re-run the generator, and commit the
-regenerated `courses.js`. The list UI and map cache in the page are built
-from the generated list at load time. The generator also warns if
-`images/maps/` does not match `images/courses/`.
+(or `images/courses/retro/` for a retro course) and a matching map in
+`images/maps/` (or `images/maps/retro/`), re-run the generator, and commit
+the regenerated `courses.js`. The list UI and map cache in the page are
+built from the generated lists at load time, with the retro courses placed
+at the end of the list. The generator also warns if the map folders do not
+match the course folders, and stops if the same name is in both the base
+and retro folders.
+
+A new course also needs a map marker position in `course_locations` in
+`script.js`, and enough number images in `images/numbers/` for the history
+markers.
 
 Course names are the filenames without extension. Filenames may include
 spaces and special characters like apostrophes (the page URL-encodes them
