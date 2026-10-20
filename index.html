@@ -51,10 +51,16 @@
             </div>
         </div>
         <div id="list-item-area" class="container" style="padding-top: 5vh">
-            <img id="course"
-                class="course"
-                src="images/random.webp"
-                onclick="randomize()" />
+            <div class="course-frame">
+                <img id="course"
+                    class="course"
+                    src="images/random.webp"
+                    onclick="randomize()" />
+                <!-- Slot-machine strip shown over the course while rolling. -->
+                <div id="reel" class="reel">
+                    <div id="reel-strip" class="reel-strip"></div>
+                </div>
+            </div>
             <div id="label"
                 class="label">
                 Click me!

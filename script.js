@@ -371,6 +371,60 @@ function listClick(id) {
     document.getElementById("list-" + index).classList.toggle('excluded');
 }
 
+// Slot-machine roll: scroll a strip of random courses from the pool across
+// the course frame, speeding up from a slow start and easing out so it
+// settles on the chosen course.
+const REEL_LENGTH = 24;     // courses scrolled past before the chosen one
+const REEL_DURATION = 2300; // ms
+async function spin_reel(pool, chosen) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return;
+    }
+    const course_img = document.getElementById("course");
+    const reel = document.getElementById("reel");
+    const strip = document.getElementById("reel-strip");
+    const random_course = () => pool[Math.floor(Math.random() * pool.length)];
+    const add = (src) => {
+        const img = document.createElement("img");
+        img.className = "reel-item";
+        img.src = src;
+        strip.appendChild(img);
+    };
+
+    // Start from whatever is showing now, then random fillers (no course
+    // twice in a row), the chosen course, and a couple more to its right.
+    strip.innerHTML = "";
+    add(course_img.src);
+    let prev = null;
+    for (let i = 0; i < REEL_LENGTH; i++) {
+        let c = random_course();
+        while (pool.length > 1 && (c === prev || (i === REEL_LENGTH - 1 && c === chosen))) {
+            c = random_course();
+        }
+        add(image_path(c, "courses"));
+        prev = c;
+    }
+    add(image_path(chosen, "courses"));
+    add(image_path(random_course(), "courses"));
+    add(image_path(random_course(), "courses"));
+
+    // Centre the first item, then transition to centring the chosen one.
+    const item_w = strip.firstChild.getBoundingClientRect().width;
+    const offset = (reel.clientWidth - item_w) / 2;
+    strip.style.transition = "none";
+    strip.style.transform = `translateX(${offset}px)`;
+    reel.classList.add("spinning");
+    course_img.style.visibility = "hidden";
+    strip.getBoundingClientRect(); // apply the start position before animating
+    strip.style.transition = `transform ${REEL_DURATION}ms cubic-bezier(0.45, 0.05, 0.15, 1)`;
+    strip.style.transform = `translateX(${offset - (REEL_LENGTH + 1) * item_w}px)`;
+    await new Promise(r => setTimeout(r, REEL_DURATION));
+
+    course_img.src = image_path(chosen, "courses");
+    course_img.style.visibility = "";
+    reel.classList.remove("spinning");
+}
+
 async function randomize() {
     if (rolling) {
         return;
@@ -389,21 +443,23 @@ async function randomize() {
         return;
     }
 
-    for (let i = 1; i <= 10; i++) {
-        document.getElementById("course").style.opacity = 1 - (i * 0.1);
-        document.getElementById("map_container").style.opacity = 1 - (i * 0.1);
-        document.getElementById("label").style.opacity = 1 - (i * 0.1);
-        await new Promise(r => setTimeout(r, 15));
-    }
-    
-    let num = Math.floor(Math.random() * list.length);
-    let course = list[num];
+    // Copy: list may be current_list itself, which auto-remove changes.
+    const pool = [...list];
+    const course = pool[Math.floor(Math.random() * pool.length)];
     
     if (exclusive && autoRemove) {
         console.log('Removing course:', display_name(course));
         current_list.splice(current_list.indexOf(course), 1);
         save();
     }
+
+    for (let i = 1; i <= 10; i++) {
+        document.getElementById("map_container").style.opacity = 1 - (i * 0.1);
+        document.getElementById("label").style.opacity = 1 - (i * 0.1);
+        await new Promise(r => setTimeout(r, 15));
+    }
+
+    await spin_reel(pool, course);
     
     document.getElementById("course").src = image_path(course, "courses");
     document.getElementById("label").innerText = display_name(course);
@@ -414,9 +470,7 @@ async function randomize() {
         save();
     }
     
-    await new Promise(r => setTimeout(r, 100));
     for (let i = 1; i <= 10; i++) {
-        document.getElementById("course").style.opacity = i * 0.1;
         document.getElementById("map_container").style.opacity = i * 0.1;
         document.getElementById("label").style.opacity = i * 0.1;
         await new Promise(r => setTimeout(r, 15));

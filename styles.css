@@ -35,7 +35,7 @@ body {
 }
 
 .exclusive {
-  height: 20vh;
+  min-height: 20vh;
 }
 .exclusive-item {
   height: 10vh;
@@ -153,4 +153,33 @@ body {
 }
 .list-item.hidden {
     display: none;
+}
+
+/* Slot-machine reel: a row of course thumbnails the size of the course
+   image, scrolled across the frame by randomize(). */
+.course-frame {
+    position: relative;
+    width: 100vw;
+    height: 30vh;
+    overflow: hidden;
+}
+.reel {
+    position: absolute;
+    inset: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+.reel.spinning {
+    visibility: visible;
+}
+.reel-strip {
+    display: flex;
+    height: 100%;
+    will-change: transform;
+}
+.reel-item {
+    flex: none;
+    width: min(100vw, 53.333vh);
+    height: 100%;
+    object-fit: contain;
 }
