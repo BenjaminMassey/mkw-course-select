@@ -11,13 +11,14 @@
  *
  * and commit the regenerated courses.js.
  */
-import { readdir, writeFile } from "node:fs/promises";
+import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const coursesDir = join(root, "images", "courses");
 const mapsDir = join(root, "images", "maps");
+const numbersDir = join(root, "images", "numbers");
 const outFile = join(root, "courses.js");
 
 const toCourseId = (name) =>
@@ -95,3 +96,34 @@ const lines = [
 
 await writeFile(outFile, lines.join("\n"));
 console.log(`Wrote ${outFile} with ${courses.length} courses and ${retroCourses.length} retro courses.`);
+
+// The map marks each course in the history with its pick number, so there
+// can be one number per course. Write images/numbers/1.svg .. N.svg (50x50,
+// red text with a dark outline on a transparent background) and remove any
+// left over from a larger course list.
+const total = courses.length + retroCourses.length;
+const numberSvg = (n) => {
+    const fontSize = String(n).length >= 3 ? 26 : 36;
+    return [
+        `<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">`,
+        `    <text x="25" y="25" text-anchor="middle" dominant-baseline="central"`,
+        `        font-family="Arial, Helvetica, sans-serif" font-weight="bold"`,
+        `        font-size="${fontSize}" fill="red" stroke="black" stroke-width="5"`,
+        `        stroke-linejoin="round" paint-order="stroke">${n}</text>`,
+        `</svg>`,
+        "",
+    ].join("\n");
+};
+await mkdir(numbersDir, { recursive: true });
+for (let n = 1; n <= total; n++) {
+    await writeFile(join(numbersDir, `${n}.svg`), numberSvg(n));
+}
+let removed = 0;
+for (const name of await readdir(numbersDir)) {
+    const match = /^(\d+)\.svg$/.exec(name);
+    if (match && Number(match[1]) > total) {
+        await rm(join(numbersDir, name));
+        removed++;
+    }
+}
+console.log(`Wrote ${total} number images to ${numbersDir}` + (removed ? ` (removed ${removed} unused).` : "."));

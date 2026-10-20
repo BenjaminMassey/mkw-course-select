@@ -28,9 +28,12 @@ at the end of the list. The generator also warns if the map folders do not
 match the course folders, and stops if the same name is in both the base
 and retro folders.
 
+The generator also writes the numbered history markers shown on the map,
+`images/numbers/1.svg` up to one per course, and removes any left over
+from a larger course list.
+
 A new course also needs a map marker position in `course_locations` in
-`script.js`, and enough number images in `images/numbers/` for the history
-markers.
+`script.js`.
 
 Course names are the filenames without extension. Filenames may include
 spaces and special characters like apostrophes (the page URL-encodes them

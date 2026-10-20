@@ -438,7 +438,7 @@ function set_map_html(map_path) {
         html += 'width: 3vh; height: 3vh; ';
         html += 'left: ' + position.x + '; ';
         html += 'top: ' + position.y + ';" ';
-        html += 'src="images/numbers/' + (i + 1).toString() + '.png" />';
+        html += 'src="images/numbers/' + (i + 1).toString() + '.svg" />';
     }
     document.getElementById('map_container').innerHTML = html;
 }
