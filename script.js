@@ -251,61 +251,82 @@ function build_cache() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-    build_list();
-    build_cache();
-    layout_list();
-});
-
-window.onload = function() {
+// Show the loaded state. Runs on DOMContentLoaded rather than window.onload,
+// which waits for every image (including the map cache) and would leave the
+// toggles showing the HTML defaults until then.
+function refresh_ui() {
     displayExclusive();
     displayRemove();
     displayRetro();
-    if (history.length > 0) {
-        set_map_html(image_path(history[history.length - 1], "maps"));
-    }
-};
+    displayListRetro();
+    layout_list();
+    showList();
+    const map = history.length > 0
+        ? image_path(history[history.length - 1], "maps")
+        : document.getElementById("map").getAttribute("src");
+    set_map_html(map);
+}
 
-let reset_safety = true;
+document.addEventListener("DOMContentLoaded", function() {
+    build_list();
+    build_cache();
+    refresh_ui();
+});
+
+// Another tab saved: pick up its state so this tab doesn't overwrite it
+// with a stale copy on its next save.
+window.addEventListener("storage", function(event) {
+    if (event.storageArea !== localStorage) {
+        return;
+    }
+    data = load();
+    current_list = data["current_list"];
+    history = data["history"];
+    exclusive = data["exclusive"];
+    autoRemove = data["autoRemove"];
+    retro = data["retro"];
+    refresh_ui();
+});
+
+// The reset and disable buttons need a second click within 5 seconds to
+// confirm. Clear the pending timer on each click so an earlier one can't
+// disarm a later confirmation early.
+let reset_timer = null;
 function resetList() {
-    if (reset_safety) {
-        reset_safety = false;
+    clearTimeout(reset_timer);
+    if (reset_timer === null) {
         document.getElementById("reset_list").src = "images/reset_confirm.webp";
-        resetTimer();
+        reset_timer = setTimeout(disarmReset, 5000);
     } else {
         current_list = [...courses];
         history = [];
         save();
         console.log('List reset to full course list');
-        document.getElementById("reset_list").src = "images/reset.webp";
-        reset_safety = true;
+        disarmReset();
         showList();
     }
 }
-async function resetTimer() {
-    await new Promise(r => setTimeout(r, 5000));
-    reset_safety = true;
+function disarmReset() {
+    reset_timer = null;
     document.getElementById("reset_list").src = "images/reset.webp";
 }
 
-let disable_safety = true;
+let disable_timer = null;
 function disableList() {
-    if (disable_safety) {
-        disable_safety = false;
+    clearTimeout(disable_timer);
+    if (disable_timer === null) {
         document.getElementById("disable_list").src = "images/disable_confirm.webp";
-        disableTimer();
+        disable_timer = setTimeout(disarmDisable, 5000);
     } else {
         current_list = [];
         save();
         console.log('List reset to none');
-        document.getElementById("disable_list").src = "images/disable.webp";
-        disable_safety = true;
+        disarmDisable();
         showList();
     }
 }
-async function disableTimer() {
-    await new Promise(r => setTimeout(r, 5000));
-    disable_safety = true;
+function disarmDisable() {
+    disable_timer = null;
     document.getElementById("disable_list").src = "images/disable.webp";
 }
 
@@ -368,7 +389,7 @@ function listClick(id) {
         save();
         console.log("Added course:", display_name(course));
     }
-    document.getElementById("list-" + index).classList.toggle('excluded');
+    document.getElementById("list-" + index).classList.toggle('excluded', !current_list.includes(course));
 }
 
 // Slot-machine roll: scroll a strip of random courses from the pool across
@@ -405,12 +426,17 @@ async function spin_reel(pool, chosen, gold) {
     // twice in a row), the chosen course, and a couple more to its right.
     strip.innerHTML = "";
     add(course_img.src);
+    // Pick each filler from the courses that are allowed at that spot rather
+    // than retrying random picks: with a pool of two, the last filler can
+    // have no allowed course (one is prev, the other is chosen), so retrying
+    // would loop forever. Fall back to any course in that case.
     let prev = null;
     for (let i = 0; i < REEL_LENGTH; i++) {
-        let c = random_course();
-        while (pool.length > 1 && (c === prev || (i === REEL_LENGTH - 1 && c === chosen))) {
-            c = random_course();
-        }
+        const last = i === REEL_LENGTH - 1;
+        const allowed = pool.filter(c => c !== prev && !(last && c === chosen));
+        const c = allowed.length > 0
+            ? allowed[Math.floor(Math.random() * allowed.length)]
+            : random_course();
         add(image_path(c, "courses"));
         prev = c;
     }
@@ -421,24 +447,43 @@ async function spin_reel(pool, chosen, gold) {
     // Centre the first item, then transition to centring the chosen one.
     const item_w = strip.firstChild.getBoundingClientRect().width;
     const offset = (reel.clientWidth - item_w) / 2;
-    strip.style.transition = "none";
-    strip.style.transform = `translateX(${offset}px)`;
-    reel.classList.add("spinning");
-    course_img.style.visibility = "hidden";
-    strip.getBoundingClientRect(); // apply the start position before animating
-    strip.style.transition = `transform ${REEL_DURATION}ms cubic-bezier(0.45, 0.05, 0.15, 1)`;
-    strip.style.transform = `translateX(${offset - (REEL_LENGTH + 1) * item_w}px)`;
-    if (gold) {
-        setTimeout(() => {
-            chosen_img.classList.add("gold");
-            document.getElementById("course-frame").classList.add("gold-frame");
-        }, REEL_DURATION - GOLD_REVEAL);
+    let gold_timer = null;
+    try {
+        strip.style.transition = "none";
+        strip.style.transform = `translateX(${offset}px)`;
+        reel.classList.add("spinning");
+        course_img.style.visibility = "hidden";
+        strip.getBoundingClientRect(); // apply the start position before animating
+        strip.style.transition = `transform ${REEL_DURATION}ms cubic-bezier(0.45, 0.05, 0.15, 1)`;
+        strip.style.transform = `translateX(${offset - (REEL_LENGTH + 1) * item_w}px)`;
+        if (gold) {
+            gold_timer = setTimeout(() => {
+                chosen_img.classList.add("gold");
+                document.getElementById("course-frame").classList.add("gold-frame");
+            }, REEL_DURATION - GOLD_REVEAL);
+        }
+        await wait(REEL_DURATION);
+        course_img.src = image_path(chosen, "courses");
+    } finally {
+        // Always put the course image back, or a failed roll leaves nothing
+        // to click.
+        clearTimeout(gold_timer);
+        course_img.style.visibility = "";
+        reel.classList.remove("spinning");
     }
-    await new Promise(r => setTimeout(r, REEL_DURATION));
+}
 
-    course_img.src = image_path(chosen, "courses");
-    course_img.style.visibility = "";
-    reel.classList.remove("spinning");
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+// Fade the map and label in or out. The fade itself is a CSS transition
+// (see #map_container and #label in styles.css); this waits for it with a
+// single timer. (Many short timers in a row stretch to seconds each when
+// the tab is in the background, which made rolls look stuck.)
+const FADE_DURATION = 150; // ms, matches styles.css
+async function fade(opacity) {
+    document.getElementById("map_container").style.opacity = opacity;
+    document.getElementById("label").style.opacity = opacity;
+    await wait(FADE_DURATION);
 }
 
 async function randomize() {
@@ -446,44 +491,50 @@ async function randomize() {
         return;
     }
     rolling = true;
-    
+    try {
+        await roll();
+    } catch (error) {
+        console.error("Roll failed:", error);
+    } finally {
+        // Always release the lock and show the map and label again, so an
+        // error can't leave every later click ignored.
+        rolling = false;
+        document.getElementById("map_container").style.opacity = "";
+        document.getElementById("label").style.opacity = "";
+    }
+}
+
+async function roll() {
     let list = exclusive ? current_list : courses;
     if (!retro) {
         list = list.filter(course => !retro_courses.has(course));
     }
-    
+
     if (list.length === 0) {
         document.getElementById("course").src = "images/empty.webp";
         document.getElementById("label").innerText = "List Empty";
-        rolling = false;
         return;
     }
 
-    // Copy: list may be current_list itself, which auto-remove changes.
+    // Copy: list may be current_list itself, which can change during the
+    // roll (list clicks, reset, another tab).
     const pool = [...list];
     const course = pool[Math.floor(Math.random() * pool.length)];
     const gold = force_gold || Math.random() < GOLD_CHANCE;
     if (gold) {
         console.log('Gold roll!');
     }
-    
-    if (exclusive && autoRemove) {
-        console.log('Removing course:', display_name(course));
-        current_list.splice(current_list.indexOf(course), 1);
-        save();
-    }
+    // Decide now, so toggling the settings mid-roll can't remove the course
+    // without recording it in the history (or the other way round).
+    const remove = exclusive && autoRemove;
 
-    for (let i = 1; i <= 10; i++) {
-        document.getElementById("map_container").style.opacity = 1 - (i * 0.1);
-        document.getElementById("label").style.opacity = 1 - (i * 0.1);
-        await new Promise(r => setTimeout(r, 15));
-    }
+    await fade(0);
 
     document.getElementById("course").classList.remove("gold");
     document.getElementById("label").classList.remove("gold");
     document.getElementById("course-frame").classList.remove("gold-frame", "gold-landed");
     await spin_reel(pool, course, gold);
-    
+
     document.getElementById("course").src = image_path(course, "courses");
     document.getElementById("course").classList.toggle("gold", gold);
     document.getElementById("label").classList.toggle("gold", gold);
@@ -498,35 +549,42 @@ async function randomize() {
         ? "★ " + display_name(course) + " (Mirror) ★"
         : display_name(course);
 
-    set_map_html(image_path(course, "maps"));
-    if (exclusive && autoRemove) {
+    // Remove the course and record it together, once the roll has landed,
+    // against whatever the list is now.
+    if (remove) {
+        console.log('Removing course:', display_name(course));
+        const index = current_list.indexOf(course);
+        if (index !== -1) {
+            current_list.splice(index, 1);
+        }
         history.push(course);
         save();
+        showList();
     }
-    
-    for (let i = 1; i <= 10; i++) {
-        document.getElementById("map_container").style.opacity = i * 0.1;
-        document.getElementById("label").style.opacity = i * 0.1;
-        await new Promise(r => setTimeout(r, 15));
-    }
-    rolling = false;
+    set_map_html(image_path(course, "maps"));
+
+    await fade(1);
 }
 
+// Show the map with the pick number of each course in the history.
 function set_map_html(map_path) {
-    document.getElementById("map").src = map_path;
-    let html = document.getElementById("map").outerHTML;
-    for (let i = 0; i < history.length; i++) {
-        let course = history[i];
-        let position = course_locations.get(course);
+    const container = document.getElementById("map_container");
+    const map = document.getElementById("map");
+    map.src = map_path;
+    for (const marker of container.querySelectorAll(".map-marker")) {
+        marker.remove();
+    }
+    history.forEach((course, i) => {
+        const position = course_locations.get(course);
         if (!position) {
             console.warn("No map position for course: " + display_name(course));
-            continue;
+            return;
         }
-        html += ' <img style="position: absolute; ';
-        html += 'width: 3vh; height: 3vh; ';
-        html += 'left: ' + position.x + '; ';
-        html += 'top: ' + position.y + ';" ';
-        html += 'src="images/numbers/' + (i + 1).toString() + '.svg" />';
-    }
-    document.getElementById('map_container').innerHTML = html;
+        const marker = document.createElement("img");
+        marker.className = "map-marker";
+        marker.style.left = position.x;
+        marker.style.top = position.y;
+        marker.src = "images/numbers/" + (i + 1) + ".svg";
+        container.appendChild(marker);
+    });
 }

@@ -147,6 +147,19 @@ body {
     height: 100%;
     object-fit: contain;
 }
+/* Pick numbers placed on the map by set_map_html(). */
+.map-marker {
+    position: absolute;
+    width: 3vh;
+    height: 3vh;
+}
+
+/* randomize() fades these out and back in around a roll; FADE_DURATION in
+   script.js matches this duration. */
+#map_container,
+#label {
+    transition: opacity 150ms linear;
+}
 
 .retro-menu {
     padding-right: 2vw;
