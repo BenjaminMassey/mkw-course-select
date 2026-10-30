@@ -392,11 +392,43 @@ function listClick(id) {
     document.getElementById("list-" + index).classList.toggle('excluded', !current_list.includes(course));
 }
 
+// Roll sounds: the rattle (audio/roll.mp3) plays for the whole spin and the
+// reel is timed to it, and the fanfare (audio/gold.mp3) plays when a gold
+// roll is revealed. Created up front so the files start loading while the
+// page is up.
+const roll_audio = new Audio("audio/roll.mp3");
+const gold_audio = new Audio("audio/gold.mp3");
+const SOUND_VOLUME = 0.6;
+roll_audio.volume = SOUND_VOLUME;
+gold_audio.volume = SOUND_VOLUME;
+
+// Start a clip from the beginning. A rejection (autoplay policy, missing
+// file) must not break the roll, so swallow it.
+function play_sound(audio) {
+    try {
+        audio.currentTime = 0;
+        audio.play().catch(error => console.warn("Audio playback failed:", error));
+    } catch (error) {
+        console.warn("Audio playback failed:", error);
+    }
+}
+
 // Slot-machine roll: scroll a strip of random courses from the pool across
 // the course frame, speeding up from a slow start and easing out so it
 // settles on the chosen course.
-const REEL_LENGTH = 24;     // courses scrolled past before the chosen one
-const REEL_DURATION = 2300; // ms
+// How fast the reel scrolls: the original 24 courses in 2.3s. The number
+// of courses scrolled past before the chosen one scales with the spin's
+// duration, so a longer spin covers more courses rather than moving slower.
+const REEL_SPEED = 24 / 2300; // courses per ms
+// The spin lasts exactly as long as audio/roll.mp3: the rattle starts with
+// the spin and the reel settles as the sound ends. The duration is read from
+// the audio once its metadata has loaded; ROLL_FALLBACK_MS is the file's
+// length (5.448s), used if a roll happens before the metadata arrives.
+const ROLL_FALLBACK_MS = 5450;
+function roll_duration_ms() {
+    const d = roll_audio.duration;
+    return Number.isFinite(d) && d > 0 ? Math.round(d * 1000) : ROLL_FALLBACK_MS;
+}
 
 // Rare "gold" roll, for a Mirror course: the chosen course lights up gold
 // and flips horizontally just before the reel stops, and stays that way
@@ -407,6 +439,8 @@ const GOLD_REVEAL = 1200; // ms before the reel stops
 const force_gold = new URLSearchParams(location.search).has("gold");
 
 async function spin_reel(pool, chosen, gold) {
+    // Reduced-motion rolls skip the reel (and its rattle): the course
+    // appears instantly.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         return;
     }
@@ -422,6 +456,9 @@ async function spin_reel(pool, chosen, gold) {
         return img;
     };
 
+    const duration = roll_duration_ms();
+    const reel_length = Math.round(duration * REEL_SPEED);
+
     // Start from whatever is showing now, then random fillers (no course
     // twice in a row), the chosen course, and a couple more to its right.
     strip.innerHTML = "";
@@ -431,8 +468,8 @@ async function spin_reel(pool, chosen, gold) {
     // have no allowed course (one is prev, the other is chosen), so retrying
     // would loop forever. Fall back to any course in that case.
     let prev = null;
-    for (let i = 0; i < REEL_LENGTH; i++) {
-        const last = i === REEL_LENGTH - 1;
+    for (let i = 0; i < reel_length; i++) {
+        const last = i === reel_length - 1;
         const allowed = pool.filter(c => c !== prev && !(last && c === chosen));
         const c = allowed.length > 0
             ? allowed[Math.floor(Math.random() * allowed.length)]
@@ -454,15 +491,17 @@ async function spin_reel(pool, chosen, gold) {
         reel.classList.add("spinning");
         course_img.style.visibility = "hidden";
         strip.getBoundingClientRect(); // apply the start position before animating
-        strip.style.transition = `transform ${REEL_DURATION}ms cubic-bezier(0.45, 0.05, 0.15, 1)`;
-        strip.style.transform = `translateX(${offset - (REEL_LENGTH + 1) * item_w}px)`;
+        strip.style.transition = `transform ${duration}ms cubic-bezier(0.45, 0.05, 0.15, 1)`;
+        strip.style.transform = `translateX(${offset - (reel_length + 1) * item_w}px)`;
+        play_sound(roll_audio); // the rattle starts with the spin
         if (gold) {
             gold_timer = setTimeout(() => {
                 chosen_img.classList.add("gold");
                 document.getElementById("course-frame").classList.add("gold-frame");
-            }, REEL_DURATION - GOLD_REVEAL);
+                play_sound(gold_audio); // the fanfare starts with the reveal
+            }, duration - GOLD_REVEAL);
         }
-        await wait(REEL_DURATION);
+        await wait(duration);
         course_img.src = image_path(chosen, "courses");
     } finally {
         // Always put the course image back, or a failed roll leaves nothing
@@ -527,6 +566,10 @@ async function roll() {
     // Decide now, so toggling the settings mid-roll can't remove the course
     // without recording it in the history (or the other way round).
     const remove = exclusive && autoRemove;
+
+    // A gold fanfare from a previous roll may still be ringing; stop it so
+    // it doesn't overlap this roll's rattle.
+    gold_audio.pause();
 
     await fade(0);
 

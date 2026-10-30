@@ -9,6 +9,9 @@ Features:
   - Exclusive mode for avoiding repeats
   - Retro Tracks toggle for including or leaving out the retro courses
   - Browser-based auto save/load of course list state
+  - Audio: the roll rattle (audio/roll.mp3) plays for the whole spin, and
+    the reel is timed to it; a gold fanfare (audio/gold.mp3) plays for the
+    rare Mirror rolls
 
 ## Course list
 
